@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PURPOSE</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet" />
+
+<style>
 /* 全体フォント */
 body {
   margin: 0;
@@ -18,6 +29,14 @@ body {
   background: #2f2725;
   overflow-y: auto;
   color: #ffffff;
+
+  /* ← Firefox用：スクロールバー非表示 */
+  scrollbar-width: none;
+}
+
+/* ← Chrome / Safari / Edge用：スクロールバー非表示 */
+.purpose-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 /* コンテンツ */
@@ -28,16 +47,12 @@ body {
 /* ✔ 修正版：背景 PURPOSE */
 .purpose-bg-title {
   position: absolute;
-  top: -30px;            /* ← もっと上に押し上げる */
-  left: 0px;             /* ← 左に固定 */
-  font-size: 78px;      /* Canvaのバランスに近づけた */
+  top: -20px;
+  left: 0px;
+  font-size: 100px;
   font-weight: 800;
   letter-spacing: 0.18em;
-
-  /* ✔ Canva に近い“超薄い黒” */
   color: #3e3634;
-
-  /* スクロールやクリックの邪魔しない */
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -46,7 +61,7 @@ body {
 /* ラベル */
 .purpose-label {
   position: relative;
-  top: 70px;  
+  top: 70px;
   z-index: 2;
   margin: 0 0 108px 0;
   font-size: 20px;
@@ -95,3 +110,56 @@ body {
     font-size: 14px;
   }
 }
+</style>
+</head>
+<body>
+
+<div class="purpose-wrapper">
+  <div class="purpose-inner">
+
+    <div class="purpose-bg-title">PURPOSE</div>
+
+    <div class="purpose-label">存在意義</div>
+
+    <h1 class="purpose-main">
+      愛を世界中の<br>
+      一人ひとりに<br>
+      届ける
+    </h1>
+
+    <p class="purpose-text">
+      愛とは、元々すべての人が心に持っている<br>
+      優しい思いやりの気持ち。<br><br>
+
+      素直になれなかったり、<br>
+      誤解していたり、<br>
+      気づいていなかったり…<br><br>
+
+      様々な理由で、<br>
+      周りの愛を受け取れていない<br>
+      愛を発揮できない人がたくさんいる。<br><br>
+
+      そんな人たち一人ひとりに対して、<br>
+      コンパッション・グループは、<br>
+      商品・サービスに深い愛情を乗せて、<br>
+      受け取った人たちの心が温かくなり、<br>
+      愛を持って生きていくきっかけを作っていきます。<br><br>
+
+      愛を受け取った人たちは、<br>
+      誰かに愛を注ぐことができる。<br><br>
+
+      人が、目の前の一人に愛を注ぎ、<br>
+      思いやることができれば、きっと世界は平和になる。<br><br>
+
+      そんな未来を作る商品・サービスを届けていくのが<br>
+      私たちの使命。<br><br>
+
+      さぁ、いっしょに、<br>
+      愛と思いやりの未来へ！
+    </p>
+
+  </div>
+</div>
+
+</body>
+</html>
