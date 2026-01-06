@@ -2,89 +2,134 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Open</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
+  <title>Open</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;margin:0;background:#111;color:#fff}
-    .wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .card{width:min(520px,100%);background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:18px}
-    h1{font-size:18px;margin:0 0 10px}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;background:#111;color:#fff}
+    .overlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      padding:24px;background:rgba(0,0,0,.75);z-index:9999;
+    }
+    .card{
+      width:min(560px,100%);background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:18px;
+    }
+    h1{margin:0 0 10px;font-size:18px}
     p{margin:0 0 12px;line-height:1.6;color:#ddd}
-    .btn{display:block;width:100%;text-align:center;padding:12px 14px;border-radius:12px;border:0;font-size:16px;cursor:pointer;margin-top:10px}
-    .btnPrimary{background:#fff;color:#111;font-weight:700}
-    .btnGhost{background:transparent;color:#fff;border:1px solid #555}
-    .small{font-size:12px;color:#aaa;margin-top:10px}
-    code{background:#2a2a2a;padding:2px 6px;border-radius:6px}
+    .tap{
+      margin-top:10px;border-radius:14px;padding:14px;background:#fff;color:#111;font-weight:800;
+      text-align:center;cursor:pointer;user-select:none;
+    }
+    .sub{margin-top:12px;color:#aaa;font-size:12px}
+    code{background:#2a2a2a;padding:2px 6px;border-radius:6px;word-break:break-all}
+    .btnRow{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .btn{
+      flex:1;min-width:180px;border-radius:12px;padding:12px;border:1px solid #555;background:transparent;
+      color:#fff;cursor:pointer;font-size:14px
+    }
+    .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:#000a;border:1px solid #333;border-radius:10px;padding:10px 12px;display:none}
   </style>
 </head>
 <body>
-<script>
-  // ★ここだけ更新運用：Gemini共有URL
-  const TARGET_URL = "https://gemini.google.com/share/76c2bbc1bf4e";
 
-  const ua = navigator.userAgent || "";
-  const isLINE = ua.includes("Line") || ua.includes("LINE");
-  const isAndroid = ua.toLowerCase().includes("android");
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-
-  // LINE以外は今まで通り即リダイレクト（最速）
-  if (!isLINE) {
-    location.replace(TARGET_URL);
-  }
-
-  // Android向け：Chromeを開かせやすい intent URL（効くことが多い）
-  function makeAndroidIntentUrl(url) {
-    // https://example.com/path -> intent://example.com/path#Intent;scheme=https;package=com.android.chrome;end
-    const u = new URL(url);
-    return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${u.protocol.replace(":","")};package=com.android.chrome;end`;
-  }
-
-  window.__OPEN__ = {
-    openChromeAndroid: () => location.href = makeAndroidIntentUrl(TARGET_URL),
-    openNormal: () => window.open(TARGET_URL, "_blank", "noopener,noreferrer"),
-    openSame: () => location.href = TARGET_URL,
-    isAndroid, isIOS
-  };
-</script>
-
-<div class="wrap">
+<div class="overlay" id="ov">
   <div class="card">
-    <h1>外部ブラウザで開いてください</h1>
+    <h1>LINE内ブラウザではうまく動きません</h1>
     <p>
-      LINEの中で開くと動作が不安定になることがあるため、<b>外部ブラウザ（Safari / Chrome）</b>で開くのがおすすめです。
+      申し訳ないのですが、LINEの中で開くと機能が不安定になることがあります。<br>
+      <b>外部ブラウザ（Safari / Chrome）</b>で開いてください。
     </p>
 
-    <!-- Android：Chrome直起動をまず出す -->
-    <button class="btn btnPrimary" onclick="__OPEN__.openChromeAndroid()" id="btnAndroid" style="display:none">
-      Chromeで開く（Android）
-    </button>
+    <div class="tap" id="tap">この画面をタップして外部ブラウザで開く</div>
 
-    <!-- iOS/共通：新しいタブで開くを試す -->
-    <button class="btn btnPrimary" onclick="__OPEN__.openNormal()">
-      ブラウザで開く
-    </button>
+    <div class="btnRow">
+      <button class="btn" id="copy">リンクをコピー</button>
+      <button class="btn" id="help">開き方の手順を見る</button>
+    </div>
 
-    <!-- それでもダメなとき用 -->
-    <button class="btn btnGhost" onclick="__OPEN__.openSame()">
-      このまま開く（LINE内ブラウザ）
-    </button>
+    <div class="sub" id="helpText" style="display:none">
+      <div style="margin-bottom:8px">
+        iPhone：右上の共有/メニュー → 「Safariで開く」<br>
+        Android：右上の︙ → 「他のアプリで開く / ブラウザで開く」
+      </div>
+      リンク：<code id="u"></code>
+    </div>
 
-    <p class="small" id="iosHelp" style="display:none">
-      iPhoneの場合：右上の <b>共有/メニュー</b> から「<b>Safariで開く</b>」を選ぶのが確実です。
-      （LINE側の仕様で、ページから強制的にSafari起動はできません）
-    </p>
-
-    <p class="small">リンク：<code id="u"></code></p>
+    <div class="sub">
+      ※Webページ側から「必ず外部ブラウザを強制起動」はできないため、開けない場合は上の手順を使ってください。
+    </div>
   </div>
 </div>
 
-<script>
-  document.getElementById("u").textContent = TARGET_URL;
+<div class="toast" id="toast"></div>
 
-  // 端末別の表示
-  if (window.__OPEN__.isAndroid) document.getElementById("btnAndroid").style.display = "block";
-  if (window.__OPEN__.isIOS) document.getElementById("iosHelp").style.display = "block";
+<script>
+  // ★毎回ここだけ変える：Gemini共有URL
+  const TARGET_URL = "https://gemini.google.com/share/76c2bbc1bf4e";
+
+  const ua = navigator.userAgent || "";
+  const isLINE = /Line|LINE/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  function toast(msg){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(window.__t);
+    window.__t = setTimeout(()=> el.style.display="none", 1700);
+  }
+
+  function makeChromeIntent(url){
+    // Android向け：Chrome intent（LINEがブロックすることもある）
+    const u = new URL(url);
+    const fallback = encodeURIComponent(url);
+    return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+  }
+
+  async function copyLink(){
+    try{
+      await navigator.clipboard.writeText(TARGET_URL);
+      toast("リンクをコピーしました");
+    }catch(e){
+      const ta=document.createElement("textarea");
+      ta.value=TARGET_URL; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+      toast("リンクをコピーしました");
+    }
+  }
+
+  function tryOpenExternal(){
+    // ここが「タップで外部起動を試みる」部分
+    if (isAndroid) {
+      location.href = makeChromeIntent(TARGET_URL);
+      return;
+    }
+    // iOSは強制不可。新規タブを試す（成功しないこともある）
+    const w = window.open(TARGET_URL, "_blank", "noopener,noreferrer");
+    if (!w) {
+      // ブロックされたら案内を見せる
+      document.getElementById("helpText").style.display = "block";
+    }
+  }
+
+  // LINE以外は即リダイレクト（今まで通り）
+  if (!isLINE) {
+    location.replace(TARGET_URL);
+  } else {
+    // LINE内：オーバーレイ表示
+    document.getElementById("ov").style.display = "flex";
+    document.getElementById("u").textContent = TARGET_URL;
+
+    document.getElementById("tap").addEventListener("click", tryOpenExternal);
+    document.getElementById("copy").addEventListener("click", copyLink);
+    document.getElementById("help").addEventListener("click", ()=> {
+      const ht = document.getElementById("helpText");
+      ht.style.display = (ht.style.display === "none" ? "block" : "none");
+    });
+  }
 </script>
+
 </body>
 </html>
