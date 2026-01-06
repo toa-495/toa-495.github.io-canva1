@@ -96,24 +96,41 @@
 
   const ua = navigator.userAgent || "";
 
-  // ---- 判定：PCは全部OK、スマホはSafari/Chrome以外を弾く ----
+  // ---- 判定方針 ----
+  // PC：全部OK（即Geminiへ）
+  // スマホ：許可するのは以下のみ
+  //   - iOS Safari
+  //   - iOS Chrome（CriOS）
+  //   - Android Chrome（ただしWebView/LINEを除外）
+  // それ以外：案内画面
+
   const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
-
-  // iOS Chrome は "CriOS" が入る。Safari は Safari が入るが、Chrome/Firefox等は別印が入る。
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
 
-  // Safari判定（iOS/AndroidのSafari相当は基本iOSのみ）
+  // アプリ内ブラウザ/埋め込みWebViewの強いシグナル（入ってたら弾く）
+  const isInAppStrong =
+    /Line\//i.test(ua) ||            // LINE内ブラウザ
+    /;\s*wv\)/i.test(ua) ||          // Android WebViewの印
+    /Version\/4\.0/i.test(ua);       // Android WebViewでありがち
+
+  // iOS Safari 判定：Safariを含み、他ブラウザ印がない
   const isSafari =
     isIOS &&
     /Safari/i.test(ua) &&
-    !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/i.test(ua);
+    !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|Line\//i.test(ua);
 
-  // Chrome判定
-  const isChrome =
-    (isIOS && /CriOS/i.test(ua)) ||
-    (!isIOS && /Chrome\/|Chromium\//i.test(ua) && !/Edg|OPR|SamsungBrowser/i.test(ua));
+  // iOS Chrome 判定
+  const isChromeIOS = isIOS && /CriOS/i.test(ua);
 
-  const allowOnMobile = (isSafari || isChrome);
+  // Android Chrome 判定：Chrome/Chromium を含み、かつ WebView/LINE ではない
+  const isChromeAndroid =
+    isAndroid &&
+    /Chrome\/|Chromium\//i.test(ua) &&
+    !/Edg|OPR|SamsungBrowser/i.test(ua) &&
+    !isInAppStrong;
+
+  const allowOnMobile = (isSafari || isChromeIOS || isChromeAndroid);
 
   function toast(msg){
     const el = document.getElementById("toast");
@@ -143,24 +160,26 @@
   }
 
   function openExternal(){
-    const isAndroid = /Android/i.test(ua);
     if (isAndroid) {
+      // AndroidはChrome起動を試みる（ブロック時はコピーで逃げる）
       location.href = makeChromeIntent(TARGET_URL);
       return;
     }
-    // iOSは強制不可なので、新規タブを試す（ダメならコピーで）
+    // iOSは強制不可なので、新規タブを試す（だめでもコピーでOK）
     window.open(TARGET_URL, "_blank", "noopener,noreferrer");
   }
 
   // ✅ ルール適用
-  // PC → 何でもOKで即リダイレクト
-  // スマホ → Safari/Chromeのみ即リダイレクト、それ以外は案内画面
-  if (!isMobile || allowOnMobile) {
+  if (!isMobile) {
+    // PCは全部OK
     location.replace(TARGET_URL);
+  } else if (allowOnMobile) {
+    // スマホでも許可されたブラウザはOK
+    location.replace(TARGET_URL);
+  } else {
+    // 案内画面表示（ここに留まる）
+    window.__APP__ = { openExternal, copyLink };
   }
-
-  // 案内画面を出す場合だけ、関数を公開
-  window.__APP__ = { openExternal, copyLink };
 </script>
 
 <div class="wrap">
@@ -173,7 +192,7 @@
     <p class="msg">
       このブラウザではうまく動作しないため、<br>
       ChromeかSafariのブラウザで開いてください💦<br><br>
-      下のボタンから、移動するか、<br>
+      下のボタンから移動するか、<br>
       URLをコピペしてお楽しみください！
     </p>
 
